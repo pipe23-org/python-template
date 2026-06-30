@@ -1,0 +1,31 @@
+[% if cli_lib == "click" %]"""Command-line entry point for [[ project_name ]]."""
+
+import click
+
+import [[ module_name ]]
+
+
+@click.command()
+def main() -> None:
+    """Run the [[ cli_command ]] command."""
+    click.echo([[ module_name ]].hello())
+
+
+if __name__ == "__main__":
+    main()
+[% else %]"""Command-line entry point for [[ project_name ]]."""
+
+import argparse
+
+import [[ module_name ]]
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Run the [[ cli_command ]] command."""
+    argparse.ArgumentParser(description="[[ description ]]").parse_args(argv)
+    print([[ module_name ]].hello())
+
+
+if __name__ == "__main__":
+    main()
+[% endif %]

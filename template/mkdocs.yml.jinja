@@ -1,0 +1,17 @@
+site_name: [[ project_name ]]
+repo_url: https://github.com/[[ github_org ]]/[[ repo_name ]]
+
+theme:
+  name: material
+  font: false
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+
+nav:
+  - Home: index.md

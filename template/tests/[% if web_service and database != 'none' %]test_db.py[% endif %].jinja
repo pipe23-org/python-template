@@ -1,0 +1,6 @@
+from [[ module_name ]] import db
+
+
+def test_engine_configured() -> None:
+    assert str(db.engine.url)
+    assert db.SessionLocal.kw["bind"] is db.engine

@@ -1,0 +1,105 @@
+[build-system]
+[% if native_extension %]
+requires = ["scikit-build-core>=0.12", "cffi>=2.0"]
+build-backend = "scikit_build_core.build"
+[% else %]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[% endif %]
+
+[project]
+name = "[[ project_name ]]"
+version = "0.0.1.dev0"
+description = "[[ description ]]"
+readme = "README.md"
+requires-python = ">=[[ python_min ]]"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "[[ author_name ]]", email = "[[ author_email ]]" }]
+dependencies = [
+[% if native_extension %]    "cffi>=2.0",
+[% endif %][% if is_application and cli_lib == "click" %]    "click",
+[% endif %][% if web_service %]    "fastapi",
+    "granian",
+[% endif %][% if web_service and database != "none" %]    "sqlalchemy[asyncio]",
+    "alembic",
+    "pydantic-settings",
+[% endif %][% if web_service and database == "postgres" %]    "asyncpg",
+[% endif %][% if web_service and database == "sqlite" %]    "aiosqlite",
+[% endif %]]
+
+[project.urls]
+Homepage = "https://github.com/[[ github_org ]]/[[ repo_name ]]"
+Documentation = "https://[[ project_name | lower | replace('_', '-') ]].readthedocs.io/"
+Repository = "https://github.com/[[ github_org ]]/[[ repo_name ]]"
+Issues = "https://github.com/[[ github_org ]]/[[ repo_name ]]/issues"
+[% if is_application %]
+[project.scripts]
+[[ cli_command ]] = "[[ module_name ]].__main__:main"
+[% endif %]
+[% if not native_extension %]
+[tool.hatch.build.targets.wheel]
+packages = ["src/[[ module_name ]]"]
+[% endif %]
+[% if native_extension %]
+# Native build via CMake — see pipe23-org/pylongfellow for a fully worked example.
+[tool.scikit-build]
+wheel.packages = ["src/[[ module_name ]]"]
+sdist.include = ["src/_cffi_src", "CMakeLists.txt"]
+
+[tool.cibuildwheel]
+build = "cp311-* cp312-* cp313-* cp314-*"
+build-frontend = "build[uv]"
+test-requires = "pytest"
+test-command = "pytest {project}/tests"
+# gtest/benchmark live in different package repos per distro (EPEL on manylinux,
+# Alpine main/community on musllinux) — wire them in before-all. See SETUP.md.
+[% endif %]
+
+[dependency-groups]
+test = ["pytest>=8", "pytest-cov"[% if web_service %], "httpx", "pytest-asyncio"[% endif %]]
+docs = ["mkdocs-material", "mkdocstrings[python]", "interrogate"]
+dev = [
+    { include-group = "test" },
+    { include-group = "docs" },
+    "ruff",
+    "mypy",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+[% if web_service and database != "none" %]extend-exclude = ["alembic"]
+[% endif %]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+[% if web_service %]asyncio_mode = "auto"
+[% endif %]
+
+[tool.interrogate]
+fail-under = 100
+ignore-init-module = false
+
+[tool.coverage.run]
+branch = true
+source = ["[[ module_name ]]"]
+[% if native_extension %]omit = ["*/_ffibuild.py"]
+[% endif %]
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", 'if __name__ == "__main__":']

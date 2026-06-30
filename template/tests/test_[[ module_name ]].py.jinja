@@ -1,0 +1,18 @@
+[% if is_application and cli_lib == "click" %]from click.testing import CliRunner
+
+[% endif %]import [[ module_name ]][% if is_application %]
+from [[ module_name ]].__main__ import main[% endif %]
+
+
+def test_hello() -> None:
+    assert [[ module_name ]].hello().startswith("hello")[% if is_application and cli_lib == "click" %]
+
+
+def test_cli() -> None:
+    result = CliRunner().invoke(main)
+    assert result.exit_code == 0
+    assert "hello" in result.output[% elif is_application %]
+
+
+def test_cli() -> None:
+    main([])[% endif %]

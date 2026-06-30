@@ -1,0 +1,14 @@
+# Native (CMake) build for [[ project_name ]] — scaffold.
+#
+# A fully worked cffi + vendored-library example lives in pipe23-org/pylongfellow
+# (CMakeLists.txt + src/_cffi_src/). Lift the structure from there and adapt to
+# your library; this file is only a starting point.
+
+cmake_minimum_required(VERSION 3.20)
+project([[ module_name ]] LANGUAGES C CXX)
+
+# TODO: vendor your upstream as a submodule and add_subdirectory() it.
+# add_subdirectory(vendor/<upstream>)
+
+# TODO: build the cffi extension from src/_cffi_src/_ffibuild.py. scikit-build-core
+# drives this; the .so lands inside the package (src/[[ module_name ]]/).

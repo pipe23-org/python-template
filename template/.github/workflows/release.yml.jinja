@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+[% if native_extension %]
+  wheels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: pypa/cibuildwheel@v3.4.1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels
+          path: wheelhouse/*.whl
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v8.2.0
+      - run: uv build --sdist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+[% else %]
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v8.2.0
+      - run: uv build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/*
+[% endif %]
+  check-version:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          tag="${GITHUB_REF_NAME#v}"
+          ver="$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          [ "$tag" = "$ver" ] || { echo "::error::tag v$tag does not match pyproject version $ver"; exit 1; }
+[% if publish_to_pypi %]
+  publish:
+    needs: [ [% if native_extension %]wheels, sdist, check-version[% else %]build, check-version[% endif %] ]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  smoke:
+    needs: publish
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [[ [python_min, '3.14'] | unique | list | tojson ]]
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          n=0
+          until pip install --no-cache-dir [[ project_name ]]; do
+            n=$((n + 1))
+            [ "$n" -ge 5 ] && exit 1
+            sleep 20
+          done
+      - run: python -c "import [[ module_name ]]; print(getattr([[ module_name ]], '__version__', 'ok'))"
+[% endif %]

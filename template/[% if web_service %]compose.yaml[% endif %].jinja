@@ -1,0 +1,64 @@
+name: [[ module_name ]]
+
+services:
+  traefik:
+    image: traefik:v3.6
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./deploy/traefik:/etc/traefik/dynamic:ro
+      - ./deploy/certs:/etc/traefik/certs:ro
+    networks: [web]
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+[% if database == "postgres" %]    depends_on:
+      db:
+        condition: service_healthy
+[% endif %]    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`[[ module_name ]].local`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls=true"
+      - "traefik.http.services.app.loadbalancer.server.port=8000"
+    networks: [web[% if database == "postgres" %], data[% endif %]]
+[% if database == "postgres" %]
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [data]
+[% endif %]
+networks:
+  web:
+[% if database == "postgres" %]  data:
+[% endif %]
+[% if database == "postgres" %]volumes:
+  pgdata:
+[% endif %]

@@ -1,0 +1,91 @@
+_min_copier_version: "9.0.0"
+_subdirectory: template
+
+# Jinja uses [[ ]] / [% %] here so GitHub Actions' own ${{ }} survives untouched.
+_envops:
+  block_start_string: "[%"
+  block_end_string: "%]"
+  variable_start_string: "[["
+  variable_end_string: "]]"
+  comment_start_string: "[#"
+  comment_end_string: "#]"
+
+project_name:
+  type: str
+  help: "PyPI / human project name (e.g. pylongfellow, my-tool)"
+
+module_name:
+  type: str
+  help: "Importable package name (snake_case, no dashes)"
+  default: "[[ project_name | lower | replace('-', '_') | replace(' ', '_') ]]"
+
+description:
+  type: str
+  help: "One-line description"
+
+author_name:
+  type: str
+  default: "Nathan Schepers"
+
+author_email:
+  type: str
+  default: "nathan.schepers@protonmail.com"
+
+github_org:
+  type: str
+  default: "pipe23-org"
+
+repo_name:
+  type: str
+  default: "[[ project_name ]]"
+
+python_min:
+  type: str
+  help: "Minimum supported Python (matrix runs this through 3.14)"
+  choices: ["3.11", "3.12", "3.13"]
+  default: "3.11"
+
+is_application:
+  type: bool
+  help: "Add a console-script entry point (i.e. it's a CLI app, not just a library)?"
+  default: false
+
+cli_command:
+  type: str
+  help: "Console command name"
+  default: "[[ module_name | replace('_', '-') ]]"
+  when: "[[ is_application ]]"
+
+cli_lib:
+  type: str
+  help: "CLI library for the entry point"
+  default: argparse
+  choices:
+    "argparse (stdlib, no dependency)": argparse
+    "click": click
+  when: "[[ is_application ]]"
+
+publish_to_pypi:
+  type: bool
+  help: "Include the PyPI publish pipeline (Trusted Publishing)?"
+  default: true
+
+native_extension:
+  type: bool
+  help: "Include the C/C++ overlay (CMake + cffi + cibuildwheel matrix)?"
+  default: false
+
+web_service:
+  type: bool
+  help: "Scaffold a FastAPI web service (+ uv multi-stage Dockerfile)?"
+  default: false
+
+database:
+  type: str
+  help: "Database (adds SQLAlchemy async + Alembic + migrate-on-deploy)"
+  default: sqlite
+  choices:
+    "SQLite (aiosqlite — prototyping)": sqlite
+    "PostgreSQL (asyncpg)": postgres
+    "none (stateless service)": none
+  when: "[[ web_service ]]"

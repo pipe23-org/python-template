@@ -1,0 +1,16 @@
+#!/bin/sh
+# Local PoC TLS via mkcert — a locally-trusted CA, so browsers show a green
+# padlock with no warnings (Let's Encrypt can't issue for a .local demo).
+#
+# For a real public domain instead: delete this, drop the dynamic.yml file
+# provider, and give Traefik an ACME resolver, e.g.:
+#   --certificatesresolvers.le.acme.email=you@example.com
+#   --certificatesresolvers.le.acme.tlschallenge=true
+#   --certificatesresolvers.le.acme.storage=/etc/traefik/acme.json
+# then label the router: traefik.http.routers.app.tls.certresolver=le
+set -e
+mkcert -install
+mkdir -p deploy/certs
+mkcert -cert-file deploy/certs/cert.pem -key-file deploy/certs/key.pem \
+  "[[ module_name ]].local" "*.[[ module_name ]].local" localhost
+echo "Cert written to deploy/certs/. Add to /etc/hosts:  127.0.0.1  [[ module_name ]].local"

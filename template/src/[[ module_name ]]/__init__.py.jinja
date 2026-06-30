@@ -1,0 +1,13 @@
+"""Top-level package for [[ project_name ]]."""
+
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("[[ project_name ]]")
+except PackageNotFoundError:  # pragma: no cover - not installed (editable source tree)
+    __version__ = "0.0.0"
+
+
+def hello() -> str:
+    """Return a friendly greeting from [[ project_name ]]."""
+    return "hello from [[ project_name ]]"

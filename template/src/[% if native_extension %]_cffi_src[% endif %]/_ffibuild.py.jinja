@@ -1,0 +1,16 @@
+"""cffi build script for [[ project_name ]] — scaffold.
+
+See pipe23-org/pylongfellow/src/_cffi_src/ for a complete example (ABI cdefs,
+set_source with the vendored library, and the CMake glue). Keeping build inputs
+in this sibling-of-the-package directory keeps them out of the shipped wheel.
+"""
+
+from cffi import FFI
+
+ffibuilder = FFI()
+
+# TODO: ffibuilder.cdef(\"\"\" ...the C ABI you're binding... \"\"\")
+# TODO: ffibuilder.set_source("[[ module_name ]]._native", ...)
+
+if __name__ == "__main__":
+    ffibuilder.compile(verbose=True)

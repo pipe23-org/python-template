@@ -1,0 +1,44 @@
+# [[ project_name ]]
+
+[![CI](https://github.com/[[ github_org ]]/[[ repo_name ]]/actions/workflows/ci.yml/badge.svg)](https://github.com/[[ github_org ]]/[[ repo_name ]]/actions/workflows/ci.yml)
+[![Docs](https://app.readthedocs.org/projects/[[ project_name | lower | replace('_', '-') ]]/badge/?version=latest)](https://[[ project_name | lower | replace('_', '-') ]].readthedocs.io/en/latest/)
+[% if publish_to_pypi %][![PyPI](https://img.shields.io/pypi/v/[[ project_name ]])](https://pypi.org/project/[[ project_name ]]/)
+[![Python](https://img.shields.io/pypi/pyversions/[[ project_name ]])](https://pypi.org/project/[[ project_name ]]/)
+[% endif %][![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+## Overview
+
+[[ description ]]
+
+[% if publish_to_pypi %]## Install
+
+```
+pip install [[ project_name ]]
+```
+
+[% endif %]## Usage
+
+```python
+import [[ module_name ]]
+```
+[% if is_application %]
+As a command line tool:
+
+```
+[[ cli_command ]] --help
+```
+[% endif %]
+For the full API, read the docstrings — they render to the docs site (mkdocstrings + Material).
+
+## Development
+
+```
+uv sync          # create the env from the lockfile
+uv run pytest    # tests
+uv run ruff check && uv run mypy   # lint + types
+uv run mkdocs serve                # docs preview
+```
+
+## License
+
+Apache-2.0.
