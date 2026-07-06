@@ -1,0 +1,19 @@
+"""MkDocs hook: dump the app's OpenAPI schema for the API docs page."""
+
+import json
+from pathlib import Path
+
+from mkdocs.config.defaults import MkDocsConfig
+
+from [[ module_name ]].app import app
+
+SPEC = Path(__file__).resolve().parent.parent / "docs" / "openapi.json"
+
+
+def on_config(config: MkDocsConfig) -> MkDocsConfig:
+    """Write docs/openapi.json before mkdocs collects the docs tree."""
+    spec = json.dumps(app.openapi(), indent=2) + "\n"
+    # Unchanged rewrites would retrigger `mkdocs serve`'s watcher in a loop.
+    if not SPEC.exists() or SPEC.read_text() != spec:
+        SPEC.write_text(spec)
+    return config

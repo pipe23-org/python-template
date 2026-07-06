@@ -15,6 +15,7 @@ project.
 |---|---|---|
 | Validation / models | **Pydantic v2** | `pydantic-settings` for config. msgpack only as a rare binary-wire exception to JSON. |
 | Web framework | **FastAPI** | |
+| API errors | **RFC 9457 problem+json** | Semantics per RFC 9110. Scaffolded handlers render HTTPException + validation errors. |
 | ORM | **SQLAlchemy 2.0 (async)** | **Not SQLModel** — it bit us (under-maintained, awkward on non-trivial queries). psycopg3 also fine. |
 | Migrations | **Alembic** | Used extensively. **Migrate-on-deploy via the entrypoint, no sidecar.** |
 | Database | **Postgres** for real; **SQLite** for prototyping | Really open to SQLite. DuckDB fine for analytical/file work. Mongo only with a *very* compelling reason (rare). |
@@ -22,7 +23,7 @@ project.
 | Config / secrets | **pydantic-settings + `.env`** | **SOPS + age** is the intended upgrade for encrypted-at-rest secrets committed to git (Nathan reading up before adopting). |
 | Scheduling / jobs | **APScheduler** | Go-to. Skip Celery's weight. |
 | Cache / broker | **Redis** if genuinely needed | Rarely has been. (Dislike hand-writing its commands.) |
-| Logging | structured — **loguru or structlog** | Don't care which; pick one and ride. |
+| Logging | **structlog** | Picked, riding. Events-with-fields (not format strings), JSON renderer for prod / pretty console for dev, stdlib bridge so uvicorn-et-al logs join the stream, log-capture testing. |
 | ASGI server | **Granian** | Zero-config drop-in; asks as little of you as uvicorn did (nothing). |
 | Routing / TLS | **Traefik** (label routing) | **mkcert** for local/PoC TLS; **ACME/Let's Encrypt** for a real domain. |
 | TUI | **Textual / Rich** | The mock-wallet pattern. Pick one, ride it. |
@@ -48,9 +49,9 @@ against a private repo over SSH).
 
 ## What's taste vs what's scaffolded
 
-- **Scaffolded** (you get it for free, on-convention): uv/ruff/mypy/pytest/coverage, docs, CI,
-  release pipeline, the FastAPI + Dockerfile + compose + Alembic + migrate-on-deploy + Traefik/cert
-  layer.
+- **Scaffolded** (you get it for free, on-convention): uv/ruff/mypy/pytest/coverage, docs (incl.
+  an OpenAPI page for services), CI, release pipeline, the FastAPI + structlog + problem+json +
+  Dockerfile + compose + Alembic + migrate-on-deploy + Traefik/cert layer.
 - **Taste** (your call per project, documented here so the default is known): which DB, HTMX vs
-  not, whether you need Redis/jobs, loguru vs structlog. The template offers the common shapes; this
-  doc says which way to lean when unsure.
+  not, whether you need Redis/jobs. The template offers the common shapes; this doc says which way
+  to lean when unsure.

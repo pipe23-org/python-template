@@ -4,7 +4,10 @@ repo_url: https://github.com/[[ github_org ]]/[[ repo_name ]]
 theme:
   name: material
   font: false
-
+[% if web_service %]
+hooks:
+  - scripts/dump_openapi.py
+[% endif %]
 plugins:
   - search
   - mkdocstrings:
@@ -12,6 +15,9 @@ plugins:
         python:
           options:
             docstring_style: google
-
+[% if web_service %]  - swagger-ui-tag
+[% endif %]
 nav:
   - Home: index.md
+[% if web_service %]  - HTTP API: api.md
+[% endif %]
