@@ -15,6 +15,7 @@ project.
 |---|---|---|
 | Validation / models | **Pydantic v2** | `pydantic-settings` for config. msgpack only as a rare binary-wire exception to JSON. |
 | Web framework | **FastAPI** | |
+| API errors | **RFC 9457 problem+json** | Semantics per RFC 9110. Scaffolded handlers render HTTPException + validation errors. |
 | ORM | **SQLAlchemy 2.0 (async)** | **Not SQLModel** — it bit us (under-maintained, awkward on non-trivial queries). psycopg3 also fine. |
 | Migrations | **Alembic** | Used extensively. **Migrate-on-deploy via the entrypoint, no sidecar.** |
 | Database | **Postgres** for real; **SQLite** for prototyping | Really open to SQLite. DuckDB fine for analytical/file work. Mongo only with a *very* compelling reason (rare). |

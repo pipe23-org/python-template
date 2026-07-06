@@ -1,0 +1,38 @@
+"""RFC 9457 problem+json rendering for HTTP and validation errors."""
+
+from collections.abc import Mapping
+from http import HTTPStatus
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException
+
+
+def _problem(
+    status: int, detail: Any, headers: Mapping[str, str] | None = None, **extensions: Any
+) -> JSONResponse:
+    """Build an application/problem+json response ("type" defaults to about:blank)."""
+    body = {"type": "about:blank", "title": HTTPStatus(status).phrase, "status": status}
+    return JSONResponse(
+        body | {"detail": detail} | extensions,
+        status_code=status,
+        headers=headers,
+        media_type="application/problem+json",
+    )
+
+
+def install_problem_handlers(app: FastAPI) -> None:
+    """Register handlers that render errors per RFC 9457."""
+
+    @app.exception_handler(HTTPException)
+    async def _http_exception(request: Request, exc: HTTPException) -> JSONResponse:
+        """Render HTTPException (FastAPI's subclasses Starlette's)."""
+        return _problem(exc.status_code, exc.detail, headers=exc.headers)
+
+    @app.exception_handler(RequestValidationError)
+    async def _validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        """Render request-validation failures, with the offending fields as an extension."""
+        return _problem(422, "Request validation failed.", errors=jsonable_encoder(exc.errors()))
