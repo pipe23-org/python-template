@@ -28,6 +28,15 @@ tests, and docs out of the box.
 Follow **`SETUP.md`** in the generated project — it's the go-public checklist (Trusted Publisher,
 RTD import, branch protection) with the gotchas we actually hit baked in.
 
+## As-yet untested
+
+The `web_service` overlay additions (structlog config, RFC 9457 problem handlers, OpenAPI page in
+the docs site) have been verified only by generating projects locally and running their full gate
+suites. Never yet exercised: a real GitHub Actions run of the generated CI, a real Read the Docs
+build (which for web services now installs the full app environment to import the app for
+`app.openapi()`), and the swagger page on a deployed docs site. First real consumer finds out;
+deal as we go.
+
 ## What's a placeholder
 
 `project_name`, `module_name`, `description`, `author_*`, `github_org`, `repo_name`, `python_min`,
