@@ -22,7 +22,7 @@ project.
 | Config / secrets | **pydantic-settings + `.env`** | **SOPS + age** is the intended upgrade for encrypted-at-rest secrets committed to git (Nathan reading up before adopting). |
 | Scheduling / jobs | **APScheduler** | Go-to. Skip Celery's weight. |
 | Cache / broker | **Redis** if genuinely needed | Rarely has been. (Dislike hand-writing its commands.) |
-| Logging | structured — **loguru or structlog** | Don't care which; pick one and ride. |
+| Logging | **structlog** | Picked, riding. Events-with-fields (not format strings), JSON renderer for prod / pretty console for dev, stdlib bridge so uvicorn-et-al logs join the stream, log-capture testing. |
 | ASGI server | **Granian** | Zero-config drop-in; asks as little of you as uvicorn did (nothing). |
 | Routing / TLS | **Traefik** (label routing) | **mkcert** for local/PoC TLS; **ACME/Let's Encrypt** for a real domain. |
 | TUI | **Textual / Rich** | The mock-wallet pattern. Pick one, ride it. |

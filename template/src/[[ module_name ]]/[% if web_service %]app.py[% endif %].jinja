@@ -1,11 +1,14 @@
 """FastAPI application for [[ project_name ]]."""
 
 from fastapi import FastAPI
-[% if database != "none" %]
-from [[ module_name ]].settings import settings
 
+from [[ module_name ]].log import configure_logging
+[% if database != "none" %]from [[ module_name ]].settings import settings
+
+configure_logging()
 app = FastAPI(title=settings.app_name)
 [% else %]
+configure_logging()
 app = FastAPI(title="[[ project_name ]]")
 [% endif %]
 
