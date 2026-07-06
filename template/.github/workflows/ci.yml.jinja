@@ -45,8 +45,10 @@ jobs:
       - uses: astral-sh/setup-uv@v8.2.0
         with:
           python-version: "[[ python_min ]]"
-      - run: uv sync --locked --no-install-project --only-group docs
-      - run: uv run --no-sync interrogate -v src/[[ module_name ]]
+[% if web_service %]      # full sync: the docs build imports the app to dump its OpenAPI schema
+      - run: uv sync --locked
+[% else %]      - run: uv sync --locked --no-install-project --only-group docs
+[% endif %]      - run: uv run --no-sync interrogate -v src/[[ module_name ]]
       - run: uv run --no-sync mkdocs build --strict
 
   test-fast:

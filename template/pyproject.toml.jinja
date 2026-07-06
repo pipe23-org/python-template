@@ -59,7 +59,7 @@ test-command = "pytest {project}/tests"
 
 [dependency-groups]
 test = ["pytest>=8", "pytest-cov"[% if web_service %], "httpx", "pytest-asyncio"[% endif %]]
-docs = ["mkdocs-material", "mkdocstrings[python]", "interrogate"]
+docs = ["mkdocs-material", "mkdocstrings[python]", "interrogate"[% if web_service %], "mkdocs-swagger-ui-tag"[% endif %]]
 dev = [
     { include-group = "test" },
     { include-group = "docs" },

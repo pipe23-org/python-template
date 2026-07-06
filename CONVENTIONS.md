@@ -49,9 +49,9 @@ against a private repo over SSH).
 
 ## What's taste vs what's scaffolded
 
-- **Scaffolded** (you get it for free, on-convention): uv/ruff/mypy/pytest/coverage, docs, CI,
-  release pipeline, the FastAPI + Dockerfile + compose + Alembic + migrate-on-deploy + Traefik/cert
-  layer.
+- **Scaffolded** (you get it for free, on-convention): uv/ruff/mypy/pytest/coverage, docs (incl.
+  an OpenAPI page for services), CI, release pipeline, the FastAPI + structlog + problem+json +
+  Dockerfile + compose + Alembic + migrate-on-deploy + Traefik/cert layer.
 - **Taste** (your call per project, documented here so the default is known): which DB, HTMX vs
-  not, whether you need Redis/jobs, loguru vs structlog. The template offers the common shapes; this
-  doc says which way to lean when unsure.
+  not, whether you need Redis/jobs. The template offers the common shapes; this doc says which way
+  to lean when unsure.
