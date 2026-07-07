@@ -20,7 +20,7 @@ project.
 | Migrations | **Alembic** | Used extensively. **Migrate-on-deploy via the entrypoint, no sidecar.** |
 | Database | **Postgres** for real; **SQLite** for prototyping | Really open to SQLite. DuckDB fine for analytical/file work. Mongo only with a *very* compelling reason (rare). |
 | Async DB driver | **asyncpg** (pg) / **aiosqlite** (sqlite) | |
-| Config / secrets | **pydantic-settings + `.env`** | **SOPS + age** is the intended upgrade for encrypted-at-rest secrets committed to git (Nathan reading up before adopting). |
+| Config / secrets | **pydantic-settings: TOML + env** | TOML file for structure, env vars override scalars. **SOPS + age** is the intended upgrade for encrypted-at-rest secrets committed to git (Nathan reading up before adopting). |
 | Scheduling / jobs | **APScheduler** | Go-to. Skip Celery's weight. |
 | Cache / broker | **Redis** if genuinely needed | Rarely has been. (Dislike hand-writing its commands.) |
 | Logging | **structlog** | Picked, riding. Events-with-fields (not format strings), JSON renderer for prod / pretty console for dev, stdlib bridge so uvicorn-et-al logs join the stream, log-capture testing. |
@@ -32,6 +32,18 @@ project.
 | Deploy | **docker-compose only** | Single host, single images, or compositions. **No Kubernetes** — a scale tax we don't need. Docker + compose is grand. |
 | Task runner | **Makefile** fine | `just` is the nicer modern option if ever wanted. |
 | Packaging / quality | **uv + ruff + mypy(strict) + pytest** | **100% branch-coverage gate**, mkdocs-Material docs, PyPI **Trusted Publishing**. (All scaffolded by this template.) |
+
+## Configuration
+
+Every web service gets a `config.py` built on pydantic-settings. `load_config(path)` reads a TOML
+file and returns a validated `Config`. Source priority, highest first: constructor arguments,
+environment variables, the `.env` file, the TOML file, then model defaults. Environment variables
+carry the prefix `MODULE_` and the nested delimiter `__`, so `MODULE_SECTION__KEY` overrides a
+scalar within a section. Structure — lists and nested tables — comes from the TOML file; env vars
+override scalars. `extra="forbid"`, so an unknown TOML key or an unknown prefixed env var is a
+validation error. A missing, unparseable, or invalid file raises `ConfigError`. The `--config` path
+is a runtime argument, which is why the module exposes a function rather than a module-level
+singleton; database variants add a `settings` singleton for the import-time engine bootstrap.
 
 ## Compose hygiene (always)
 

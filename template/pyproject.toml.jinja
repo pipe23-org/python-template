@@ -21,10 +21,10 @@ dependencies = [
 [% endif %][% if is_application and cli_lib == "click" %]    "click",
 [% endif %][% if web_service %]    "fastapi",
     "granian",
+    "pydantic-settings",
     "structlog",
 [% endif %][% if web_service and database != "none" %]    "sqlalchemy[asyncio]",
     "alembic",
-    "pydantic-settings",
 [% endif %][% if web_service and database == "postgres" %]    "asyncpg",
 [% endif %][% if web_service and database == "sqlite" %]    "aiosqlite",
 [% endif %]]

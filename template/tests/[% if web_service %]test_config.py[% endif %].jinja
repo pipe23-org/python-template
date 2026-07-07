@@ -1,0 +1,52 @@
+from pathlib import Path
+
+import pytest
+
+from [[ module_name ]].config import ConfigError, load_config
+
+PREFIX = "[[ module_name | upper ]]_"
+
+
+def _write(tmp_path: Path, body: str) -> Path:
+    path = tmp_path / "config.toml"
+    path.write_text(body)
+    return path
+
+
+def test_toml_load(tmp_path: Path) -> None:
+    config = load_config(_write(tmp_path, '[app]\nname = "from-toml"\n'))
+    assert config.app.name == "from-toml"
+
+
+def test_env_overrides_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(f"{PREFIX}APP__NAME", "from-env")
+    config = load_config(_write(tmp_path, '[app]\nname = "from-toml"\n'))
+    assert config.app.name == "from-env"
+
+
+def test_dotenv_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text(f"{PREFIX}APP__NAME=from-dotenv\n")
+    config = load_config(_write(tmp_path, "[app]\n"))
+    assert config.app.name == "from-dotenv"
+
+
+def test_unknown_toml_key_rejected(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError, match="invalid configuration"):
+        load_config(_write(tmp_path, "[app]\nbogus = 1\n"))
+
+
+def test_unknown_prefixed_env_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(f"{PREFIX}APP__BOGUS", "1")
+    with pytest.raises(ConfigError, match="invalid configuration"):
+        load_config(_write(tmp_path, "[app]\n"))
+
+
+def test_invalid_toml(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError, match="invalid TOML"):
+        load_config(_write(tmp_path, "this is = = not toml"))
+
+
+def test_missing_file(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError, match="not found"):
+        load_config(tmp_path / "nope.toml")

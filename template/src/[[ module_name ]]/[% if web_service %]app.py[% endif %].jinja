@@ -2,15 +2,13 @@
 
 from fastapi import FastAPI
 
-from [[ module_name ]].log import configure_logging
+[% if database != "none" %]from [[ module_name ]].config import settings
+[% endif %]from [[ module_name ]].log import configure_logging
 from [[ module_name ]].problem import install_problem_handlers
-[% if database != "none" %]from [[ module_name ]].settings import settings
 
 configure_logging()
-app = FastAPI(title=settings.app_name)
-[% else %]
-configure_logging()
-app = FastAPI(title="[[ project_name ]]")
+[% if database != "none" %]app = FastAPI(title=settings.app.name)
+[% else %]app = FastAPI(title="[[ project_name ]]")
 [% endif %]install_problem_handlers(app)
 
 

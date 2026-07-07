@@ -1,0 +1,93 @@
+"""Configuration loading: a TOML file with environment-variable overrides.
+
+Structure — lists and nested tables — comes from the TOML file. Environment
+variables named ``[[ module_name | upper ]]_SECTION__KEY`` override scalar
+values within a section; ``[[ module_name | upper ]]_`` is the prefix and ``__``
+separates nesting levels. Unprefixed environment variables are ignored. Unknown
+keys, in the TOML file or in a prefixed environment variable, are rejected.
+
+Source priority, highest first: constructor arguments, environment variables,
+the ``.env`` file, the TOML file, then model defaults.
+"""
+
+import tomllib
+from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    TomlConfigSettingsSource,
+)
+
+
+class ConfigError(Exception):
+    """Raised when a configuration file is missing, unparseable, or invalid."""
+
+
+class AppConfig(BaseModel):
+    """The ``[app]`` table: application-level settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = "[[ project_name ]]"
+[% if database != "none" %]    database_url: str = "[% if database == 'postgres' %]postgresql+asyncpg://app:app@db:5432/app[% else %]sqlite+aiosqlite:///./app.db[% endif %]"
+[% endif %]
+
+class Config(BaseSettings):
+    """The whole configuration file. Add sections as fields on this model."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="[[ module_name | upper ]]_",
+        env_nested_delimiter="__",
+        env_file=".env",
+        extra="forbid",
+    )
+
+    app: AppConfig = AppConfig()
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Order the sources and bind the TOML source to ``model_config['toml_file']``."""
+        toml_settings = TomlConfigSettingsSource(
+            settings_cls, toml_file=cls.model_config.get("toml_file")
+        )
+        return (init_settings, env_settings, dotenv_settings, toml_settings)
+
+
+def load_config(path: str | Path) -> Config:
+    """Load and validate a configuration file.
+
+    Args:
+        path: Path to the TOML file.
+
+    Returns:
+        The validated configuration.
+
+    Raises:
+        ConfigError: The file is missing, not valid TOML, or fails validation.
+    """
+    file = Path(path)
+    if not file.is_file():
+        raise ConfigError(f"config file not found: {path}")
+    Config.model_config["toml_file"] = file
+    try:
+        return Config()
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"invalid TOML in {path}: {exc}") from exc
+    except ValidationError as exc:
+        raise ConfigError(f"invalid configuration in {path}: {exc}") from exc
+[% if database != "none" %]
+
+settings = Config()
+"""Environment-driven configuration for import-time infrastructure (the database
+engine and Alembic). Built from environment variables, ``.env``, and defaults."""
+[% endif %]
