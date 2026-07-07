@@ -8,7 +8,28 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict
 from starlette.exceptions import HTTPException
+
+
+class Problem(BaseModel):
+    """The problem+json body install_problem_handlers renders.
+
+    Extension members are permitted, so the 422 body's ``errors`` list validates.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    type: str = "about:blank"
+    title: str
+    status: int
+    detail: str
+
+
+class ValidationProblem(Problem):
+    """The 422 body: a Problem with the offending fields under an ``errors`` member."""
+
+    errors: list[dict[str, Any]]
 
 
 def _problem(
@@ -24,8 +45,57 @@ def _problem(
     )
 
 
+def problem_responses(*codes: int) -> dict[int, dict[str, Any]]:
+    """Return `responses=` entries declaring Problem under application/problem+json.
+
+    Each code's description is its HTTP reason phrase. A route passes the result to its
+    decorator to document the errors it raises without hand-writing the mapping.
+    """
+    schema = {"$ref": "#/components/schemas/Problem"}
+    return {
+        code: {
+            "model": Problem,
+            "description": HTTPStatus(code).phrase,
+            "content": {"application/problem+json": {"schema": schema}},
+        }
+        for code in codes
+    }
+
+
+def _use_problem_for_validation(schema: dict[str, Any]) -> dict[str, Any]:
+    """Rewrite every 422 response in an OpenAPI schema to the problem+json body.
+
+    Replaces FastAPI's stock HTTPValidationError entry, in place, with ValidationProblem
+    under application/problem+json, and drops the now-unreferenced stock schemas.
+    """
+    touched = False
+    for item in schema["paths"].values():
+        for operation in item.values():
+            if not isinstance(operation, dict):
+                continue
+            responses = operation.get("responses", {})
+            if "422" in responses:
+                responses["422"] = {
+                    "description": HTTPStatus(422).phrase,
+                    "content": {
+                        "application/problem+json": {
+                            "schema": {"$ref": "#/components/schemas/ValidationProblem"}
+                        }
+                    },
+                }
+                touched = True
+    if touched:
+        schemas = schema.setdefault("components", {}).setdefault("schemas", {})
+        schemas["ValidationProblem"] = ValidationProblem.model_json_schema(
+            ref_template="#/components/schemas/{model}"
+        )
+        schemas.pop("HTTPValidationError", None)
+        schemas.pop("ValidationError", None)
+    return schema
+
+
 def install_problem_handlers(app: FastAPI) -> None:
-    """Register handlers that render errors per RFC 9457."""
+    """Register handlers that render errors per RFC 9457, and document 422 accordingly."""
 
     @app.exception_handler(HTTPException)
     async def _http_exception(request: Request, exc: HTTPException) -> JSONResponse:
@@ -36,3 +106,11 @@ def install_problem_handlers(app: FastAPI) -> None:
     async def _validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
         """Render request-validation failures, with the offending fields as an extension."""
         return _problem(422, "Request validation failed.", errors=jsonable_encoder(exc.errors()))
+
+    generate = app.openapi
+
+    def openapi() -> dict[str, Any]:
+        """Return the app's OpenAPI schema with 422 rendered as problem+json."""
+        return _use_problem_for_validation(generate())
+
+    app.openapi = openapi  # type: ignore[method-assign]
