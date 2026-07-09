@@ -13,9 +13,10 @@ from starlette.exceptions import HTTPException
 
 
 class Problem(BaseModel):
-    """The problem+json body install_problem_handlers renders.
+    """An RFC 9457 problem+json error body.
 
-    Extension members are permitted, so the 422 body's ``errors`` list validates.
+    Extension members are permitted; the 422 body carries its offending fields under
+    ``errors``.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -45,29 +46,51 @@ def _problem(
     )
 
 
-def problem_responses(*codes: int) -> dict[int, dict[str, Any]]:
+_PROBLEM_DETAILS: dict[int, str] = {
+    400: "the request was malformed",
+    404: "the requested resource does not exist",
+    409: "the request conflicts with the current state of the resource",
+    503: "the service is temporarily unavailable",
+}
+
+
+def problem_responses(*codes: int) -> dict[int | str, dict[str, Any]]:
     """Return `responses=` entries declaring Problem under application/problem+json.
 
-    Each code's description is its HTTP reason phrase. A route passes the result to its
-    decorator to document the errors it raises without hand-writing the mapping.
+    Each code's description is its HTTP reason phrase, and each carries an example body so
+    Swagger renders a realistic Problem instead of a synthesized one. A route passes the
+    result to its decorator to document the errors it raises without hand-writing the mapping.
     """
     schema = {"$ref": "#/components/schemas/Problem"}
     return {
         code: {
-            "model": Problem,
             "description": HTTPStatus(code).phrase,
-            "content": {"application/problem+json": {"schema": schema}},
+            "content": {
+                "application/problem+json": {
+                    "schema": schema,
+                    "example": {
+                        "type": "about:blank",
+                        "title": HTTPStatus(code).phrase,
+                        "status": code,
+                        "detail": _PROBLEM_DETAILS.get(code, HTTPStatus(code).phrase),
+                    },
+                }
+            },
         }
         for code in codes
     }
 
 
 def _use_problem_for_validation(schema: dict[str, Any]) -> dict[str, Any]:
-    """Rewrite every 422 response in an OpenAPI schema to the problem+json body.
+    """Register the Problem schema and rewrite every 422 response to problem+json.
 
-    Replaces FastAPI's stock HTTPValidationError entry, in place, with ValidationProblem
-    under application/problem+json, and drops the now-unreferenced stock schemas.
+    The routes reference Problem only through ``$ref``, so it is registered unconditionally.
+    Each 422 replaces FastAPI's stock HTTPValidationError entry, in place, with
+    ValidationProblem under application/problem+json plus an example body, and drops the
+    now-unreferenced stock schemas.
     """
+    schemas = schema.setdefault("components", {}).setdefault("schemas", {})
+    schemas["Problem"] = Problem.model_json_schema(ref_template="#/components/schemas/{model}")
     touched = False
     for item in schema["paths"].values():
         for operation in item.values():
@@ -79,13 +102,25 @@ def _use_problem_for_validation(schema: dict[str, Any]) -> dict[str, Any]:
                     "description": HTTPStatus(422).phrase,
                     "content": {
                         "application/problem+json": {
-                            "schema": {"$ref": "#/components/schemas/ValidationProblem"}
+                            "schema": {"$ref": "#/components/schemas/ValidationProblem"},
+                            "example": {
+                                "type": "about:blank",
+                                "title": HTTPStatus(422).phrase,
+                                "status": 422,
+                                "detail": "Request validation failed.",
+                                "errors": [
+                                    {
+                                        "type": "missing",
+                                        "loc": ["body", "field"],
+                                        "msg": "Field required",
+                                    }
+                                ],
+                            },
                         }
                     },
                 }
                 touched = True
     if touched:
-        schemas = schema.setdefault("components", {}).setdefault("schemas", {})
         schemas["ValidationProblem"] = ValidationProblem.model_json_schema(
             ref_template="#/components/schemas/{model}"
         )

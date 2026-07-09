@@ -45,6 +45,14 @@ validation error. A missing, unparseable, or invalid file raises `ConfigError`. 
 is a runtime argument, which is why the module exposes a function rather than a module-level
 singleton; database variants add a `settings` singleton for the import-time engine bootstrap.
 
+## FastAPI route documentation
+
+OpenAPI-facing prose goes in explicit decorator arguments: `summary=`, `description=`, and
+`response_description=`, plus `tags=` and `operation_id=`. The function docstring stays Google-style
+(Args/Returns/Raises) for interrogate and code readers, and never reaches the schema. FastAPI's `\f`
+docstring-truncation marker is unusable under the ruff gates: the `\f` escape trips D301, and `ruff
+format` strips a literal form-feed byte as trailing whitespace.
+
 ## Compose hygiene (always)
 
 `healthcheck:` on every service, `restart: unless-stopped`, `depends_on: condition:

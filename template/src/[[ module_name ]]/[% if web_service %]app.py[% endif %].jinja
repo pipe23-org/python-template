@@ -1,18 +1,34 @@
 """FastAPI application for [[ project_name ]]."""
 
+from typing import Literal
+
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 [% if database != "none" %]from [[ module_name ]].config import settings
 [% endif %]from [[ module_name ]].log import configure_logging
 from [[ module_name ]].problem import install_problem_handlers
 
+
+class HealthStatus(BaseModel):
+    """The ``/health`` 200 body."""
+
+    status: Literal["ok"]
+
+
 configure_logging()
-[% if database != "none" %]app = FastAPI(title=settings.app.name)
-[% else %]app = FastAPI(title="[[ project_name ]]")
+[% if database != "none" %]app = FastAPI(title=settings.app.name, openapi_tags=[{"name": "health"}])
+[% else %]app = FastAPI(title="[[ project_name ]]", openapi_tags=[{"name": "health"}])
 [% endif %]install_problem_handlers(app)
 
 
-@app.get("/health")
-async def health() -> dict[str, str]:
-    """Liveness probe."""
-    return {"status": "ok"}
+@app.get(
+    "/health",
+    tags=["health"],
+    operation_id="health",
+    summary="Liveness probe",
+    response_description="Service is up",
+)
+async def health() -> HealthStatus:
+    """Report that the service process is up."""
+    return HealthStatus(status="ok")

@@ -86,11 +86,16 @@ async def test_problem_model_round_trips_validation_error() -> None:
 def test_problem_responses_mapping_shape() -> None:
     responses = problem_responses(404, 409)
     assert set(responses) == {404, 409}
-    assert responses[404]["model"] is Problem
+    assert "model" not in responses[404]
     assert responses[404]["description"] == "Not Found"
     assert responses[409]["description"] == "Conflict"
-    assert responses[404]["content"] == {
-        "application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}
+    content = responses[404]["content"]["application/problem+json"]
+    assert content["schema"] == {"$ref": "#/components/schemas/Problem"}
+    assert content["example"] == {
+        "type": "about:blank",
+        "title": "Not Found",
+        "status": 404,
+        "detail": "the requested resource does not exist",
     }
 
 
@@ -123,4 +128,5 @@ def test_use_problem_for_validation_ignores_non_operations() -> None:
     schema = {"paths": {"/x": {"parameters": [], "get": {"responses": {"200": {}}}}}}
     result = _use_problem_for_validation(schema)
     assert result["paths"]["/x"]["get"]["responses"] == {"200": {}}
-    assert "components" not in result
+    assert "Problem" in result["components"]["schemas"]
+    assert "ValidationProblem" not in result["components"]["schemas"]
