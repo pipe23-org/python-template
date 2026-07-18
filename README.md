@@ -1,18 +1,19 @@
 # python-template
 
-A [Copier](https://copier.readthedocs.io/) template for pipe23 Python projects, distilled out of
-[`pipe23-org/pylongfellow`](https://github.com/pipe23-org/pylongfellow) after its peel-out.
-Generated projects build, lint, type-check, test, and document out of the box:
+A [Copier](https://copier.readthedocs.io/) template for pipe23 Python projects. Generated projects build, lint, type-check, test, and document.
+Includes:
 
 - **uv** — packaging, locking, and task running; no requirements.txt
 - **ruff** (lint + format) and **mypy** in strict mode
 - **pytest** with a 100% branch-coverage gate
 - **mkdocs-Material** docs with a Read the Docs config
 - **GitHub Actions CI** — lint / types / docs / test matrix (`python_min` through 3.14)
-- **Release pipeline** to PyPI via Trusted Publishing (no tokens)
+- **Release pipeline** — PyPI via Trusted Publishing; projects with a Dockerfile (web services,
+  currently) also push a multi-arch image to GHCR. No tokens in either path — Trusted Publishing
+  and `GITHUB_TOKEN` respectively.
 - **Dependabot** for actions and dependencies
 - A generated **SETUP.md** — the go-public checklist (branch protection, RTD import, Trusted
-  Publisher registration), with the traps we hit baked in
+  Publisher registration)
 
 ## Options
 
@@ -25,7 +26,8 @@ Answers to the Copier prompts select overlays:
 - `native_extension` — C/C++ overlay: CMake + cffi build, cibuildwheel wheel matrix
 - `web_service` — FastAPI service: structlog logging, RFC 9457 problem+json error handling,
   TOML + env config via pydantic-settings, OpenAPI page in the docs site, multi-stage
-  Dockerfile, compose file with Traefik routing and mkcert/ACME TLS, GHCR image job
+  Dockerfile, compose file with Traefik routing and mkcert/ACME TLS, multi-arch GHCR image on
+  release
 - `database` (web services) — SQLite or PostgreSQL: SQLAlchemy 2.0 async, Alembic migrations
   applied on deploy by the entrypoint
 
