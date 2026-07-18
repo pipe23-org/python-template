@@ -31,9 +31,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # no cache: the only lockfile is generated into runner.temp during the run
       - uses: astral-sh/setup-uv@v8.2.0
         with:
           python-version: "3.11"
+          enable-cache: false
       # --vcs-ref HEAD: exercise this commit, not the latest tag copier would default to
       - run: >
           uvx copier copy --vcs-ref HEAD --defaults
