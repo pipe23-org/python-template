@@ -43,6 +43,9 @@ Copier conditional paths: the segment renders only when the condition holds, so 
 project contains no `deploy/` at all. This template uses `[% %]` / `[[ ]]` as Jinja delimiters
 instead of the defaults so GitHub Actions' own `${{ }}` expressions pass through untouched.
 
+See [`DOCS-STYLE.md`](DOCS-STYLE.md) for the README skeleton this template's `README.md.jinja`
+implements.
+
 ## Use it
 
 ```bash
