@@ -59,6 +59,14 @@ cd ../my-new-thing && uvx copier update
 Copier copies from the latest tag; tags are the template's release channel. After generating,
 run `uv lock`, then work through the generated `SETUP.md`.
 
+Versions track what `copier update` does to a project generated from the previous tag, not the
+size of the content change:
+
+- **patch** — the update replays cleanly: no new questions, changes land inside existing files
+- **minor** — the update adds surface: a new question or newly generated files
+- **major** — the update needs manual work: a question renamed or removed, answer semantics
+  changed, or the file layout restructured
+
 ## License
 
 Apache-2.0. The license covers this template's own files; projects you generate from it are
