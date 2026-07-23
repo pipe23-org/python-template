@@ -10,7 +10,9 @@ Includes:
 - **GitHub Actions CI** — lint / types / docs / test matrix (`python_min` through 3.14)
 - **Release pipeline** — PyPI via Trusted Publishing; projects with a Dockerfile (web services,
   currently) also push a multi-arch image to GHCR. No tokens in either path — Trusted Publishing
-  and `GITHUB_TOKEN` respectively.
+  and `GITHUB_TOKEN` respectively. Once the publish jobs succeed, a tag push creates a GitHub
+  Release with notes from the matching `## <version>` section of `CHANGELOG.md`; the release fails
+  if that section is missing.
 - **Dependabot** for actions and dependencies
 - A generated **SETUP.md** — the go-public checklist (branch protection, RTD import, Trusted
   Publisher registration)
