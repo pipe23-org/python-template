@@ -51,15 +51,18 @@ Then create the GitHub environment: `gh api -X PUT repos/[[ github_org ]]/[[ rep
 ## 4. Release
 
 ```
-# bump pyproject version, THEN regenerate the lock (uv sync --locked fails otherwise):
+# bump pyproject version and add a matching `## <version>` section to CHANGELOG.md,
+# THEN regenerate the lock (uv sync --locked fails otherwise):
 uv lock
 git commit -am "Release 0.1.0" && git push        # via PR if main is protected
 git tag -a v0.1.0 -m "0.1.0" && git push origin v0.1.0
 ```
 
-`release.yml` runs check-version → build[% if native_extension %]/wheels[% endif %] → publish → smoke. A version is
-permanent on PyPI once uploaded; re-pushing the same tag only works for *pre-upload* failures
-(`skip-existing` covers a partial upload). README/example edits never need a re-release.
+`release.yml` runs check-version → build[% if native_extension %]/wheels[% endif %] → publish → smoke → release. The release
+job extracts the `## 0.1.0` section from CHANGELOG.md for the GitHub Release notes and fails if
+that section is missing. A version is permanent on PyPI once uploaded; re-pushing the same tag
+only works for *pre-upload* failures (`skip-existing` covers a partial upload). README/example
+edits never need a re-release.
 
 [% endif %]## [[ '5' if publish_to_pypi else '3' ]]. Read the Docs
 
