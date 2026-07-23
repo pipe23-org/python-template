@@ -124,7 +124,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 [% endif %]
   release:
-    needs: [ [% if native_extension %]wheels, sdist[% else %]build[% endif %], check-version[% if publish_to_pypi %], publish[% endif %][% if web_service %], image[% endif %] ]
+    needs: [ [% if native_extension %]wheels, sdist[% else %]build[% endif %], check-version[% if publish_to_pypi %], publish, smoke[% endif %][% if web_service %], image[% endif %] ]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:

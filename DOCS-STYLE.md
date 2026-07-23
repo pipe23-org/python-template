@@ -80,3 +80,14 @@ parent project) is a delta on the skeleton, not a separate template.
 - The section sits between Development and License.
 - At maturity, the section is deleted wholesale, along with the intro's stability hedge. It is
   never softened in place.
+
+## Changelog
+
+- `CHANGELOG.md` at the repository root. Title heading `# Changelog`.
+- One section per release: `## <version> - YYYY-MM-DD`, newest first. Versions carry no leading `v`.
+- A `## Unreleased` section sits above the newest release section while unreleased changes exist. A pull request that changes observable behavior adds its entry to this section in the same pull request.
+- At release, the `## Unreleased` heading becomes `## <version> - <date>`.
+- An entry is one bullet: a complete sentence, verb-first past tense ("Added", "Fixed", "Removed") or the artifact as subject with "now" stating the new behavior, ending with the pull-request reference in parentheses (`(#NN)`).
+- Entries state observable behavior: API, configuration, wire formats, platform and toolchain support, shipped dependencies. Internal refactors, CI changes, and documentation-only changes get no entry.
+- `**BACKWARDS INCOMPATIBLE:**` prefixes a breaking-change entry; such entries lead their section. `**SECURITY:**` prefixes a security-fix entry. Neither carries further apparatus.
+- An entry for changed existing behavior names the old and the new behavior.
