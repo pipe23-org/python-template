@@ -51,7 +51,8 @@ Then create the GitHub environment: `gh api -X PUT repos/[[ github_org ]]/[[ rep
 ## 4. Release
 
 ```
-# bump pyproject version and add a matching `## <version>` section to CHANGELOG.md,
+# bump pyproject version and rename CHANGELOG.md's `## Unreleased` heading to
+# `## <version> - <date>` (e.g. `## 0.1.0 - 2026-01-15`),
 # THEN regenerate the lock (uv sync --locked fails otherwise):
 uv lock
 git commit -am "Release 0.1.0" && git push        # via PR if main is protected
