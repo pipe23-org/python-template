@@ -71,6 +71,10 @@ Import at <https://app.readthedocs.org/> (it auto-detects `.readthedocs.yaml`). 
 doesn't appear in the list, use **Import Manually** with the repo URL — that bypasses the stale
 discovery list. Add the incoming-webhook URL + secret under the repo's Settings → Webhooks
 (events: push, create, delete) so docs rebuild on push and tags become versions.
+
+Verify the webhook exists — `gh api repos/<org>/<name>/hooks` lists a readthedocs.org URL — and
+that a subsequent push starts a second RTD build. The import's initial build runs without the
+webhook, so first-build-green does not confirm the connection.
 [% if publish_to_pypi %]
 After the first publish, the PyPI Documentation URL fills in automatically from `[project.urls]`.
 [% endif %]

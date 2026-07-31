@@ -73,6 +73,8 @@ src = ["src", "tests"]
 [% if web_service and database != "none" %]extend-exclude = ["alembic"]
 [% endif %]
 
+# Closed list via `select`, never `extend-select`: a ruff upgrade must not change
+# which rules run. Widen the list deliberately, per project.
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "D"]
 
